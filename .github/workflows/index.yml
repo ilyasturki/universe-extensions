@@ -1,0 +1,40 @@
+name: index
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: index-${{ github.ref }}
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out Universe's shipped modules and sources
+        uses: actions/checkout@v7
+        with:
+          repository: ilyasturki/universe
+          path: universe
+          sparse-checkout: |
+            modules
+            sources
+      - run: python3 -m unittest discover -s tests
+      - run: tools/index --universe universe --out "$RUNNER_TEMP/index.json"
+      - name: Publish index.json to the index branch, created on the first run
+        if: github.event_name != 'pull_request'
+        run: |
+          if git fetch --quiet --depth 1 origin index; then
+            git worktree add --quiet -B index "$RUNNER_TEMP/index" FETCH_HEAD
+          else
+            git worktree add --quiet --orphan -b index "$RUNNER_TEMP/index"
+          fi
+          cp "$RUNNER_TEMP/index.json" "$RUNNER_TEMP/index/index.json"
+          cd "$RUNNER_TEMP/index"
+          git add index.json
+          git diff --cached --quiet && exit 0
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "index: $(git -C "$GITHUB_WORKSPACE" log -1 --format=%h)"
+          git push --quiet origin index
