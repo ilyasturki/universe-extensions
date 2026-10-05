@@ -36,8 +36,8 @@ https://raw.githubusercontent.com/ilyasturki/universe-extensions/index/index.jso
    archive, so the entry doesn't repeat them.
 3. Open a pull request. Its template lists what the check covers and what the review looks at.
 
-A new version is a pull request changing `url` and `sha256`. Merging is the review, and an
-entry that goes bad is removed the same way.
+A new version is a pull request changing `url` and `sha256`. Merging is the review, and an entry that goes bad is
+removed by another pull request.
 
 ## The check
 
@@ -46,8 +46,8 @@ entry that goes bad is removed the same way.
 - lacks one of the nine fields, has another, or sits in a file named after another id;
 - has a `url` or `homepage` that isn't https://;
 - names an archive that doesn't download, or whose sha256 isn't the entry's;
-- names an archive holding no `module.toml` or `source.toml`, or both, or one whose `id` or kind isn't the entry's,
-  with no `version` or `api`, or a source with no `exe`;
+- names an archive holding no `module.toml` or `source.toml` at its root or in its one folder, or holding both;
+- has a manifest whose `id` or kind isn't the entry's, that lacks a `version` or an `api`, or, for a source, an `exe`;
 - takes an id a module or a source shipping with Universe holds.
 
 Then it writes `index.json`: schema 1, each entry with the manifest's version and api and the archive's size. Author and
@@ -60,4 +60,4 @@ python3 -m unittest discover -s tests
 tools/index --universe ../universe --out index.json
 ```
 
-It needs Python 3.11 or later and nothing else.
+Both need Python 3.11 or later and no package.
