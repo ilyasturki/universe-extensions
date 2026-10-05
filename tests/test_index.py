@@ -173,6 +173,18 @@ class Index(unittest.TestCase):
         self.entry("shop", "source", self.archive("shop.bin", b"\x00" * 600))
         self.assert_fails("shop.toml")
 
+    def test_a_corrupt_archive_fails_its_entry_alone(self):
+        self.samples()
+        self.entry("shop", "source", self.archive("shop.tgz", self.archives["now-playing"].read_bytes()[:40]))
+        done = self.run_index("--allow-local")
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("failed: shop.toml\n", done.stderr)
+        self.assertNotIn("Traceback", done.stderr)
+
+    def test_an_entry_that_is_not_text(self):
+        (self.entries / "shop.toml").write_bytes(b"id = \xff\n")
+        self.assert_fails("shop.toml")
+
 
 if __name__ == "__main__":
     unittest.main()
